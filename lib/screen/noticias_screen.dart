@@ -4,9 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_html/flutter_html.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import '../appbar.dart';
-// A importação de noticias.dart foi removida
 
-// A classe Noticia foi movida para este arquivo
+// A classe Noticia foi movida para este arquivo.
 class Noticia {
   final String title;
   final String description;
@@ -25,7 +24,6 @@ class Noticia {
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       link: json['link'] ?? '',
-      // A imagem não existe no JSON do back-end, então definimos como vazia.
       imageUrl: '', 
     );
   }
@@ -50,7 +48,8 @@ class NoticiasScreenState extends State<NoticiasScreen> {
 
   Future<void> fetchNoticias() async {
     try {
-      final response = await http.get(Uri.parse('http://10.0.2.2:8000/rss/')); // Corrigido para incluir a barra final
+      // MUDANÇA AQUI: Usando 'localhost' para o navegador
+      final response = await http.get(Uri.parse('http://localhost:8000/rss/'));
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = json.decode(response.body);
