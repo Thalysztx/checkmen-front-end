@@ -5,7 +5,6 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import '../appbar.dart';
 
-// A classe Noticia foi movida para este arquivo.
 class Noticia {
   final String title;
   final String description;
@@ -24,7 +23,7 @@ class Noticia {
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       link: json['link'] ?? '',
-      imageUrl: '', 
+      imageUrl: '',
     );
   }
 }
@@ -48,11 +47,16 @@ class NoticiasScreenState extends State<NoticiasScreen> {
 
   Future<void> fetchNoticias() async {
     try {
-      // MUDANÇA AQUI: Usando 'localhost' para o navegador
       final response = await http.get(Uri.parse('http://localhost:8000/rss/'));
+
+      debugPrint('Status Code da resposta: ${response.statusCode}');
+      debugPrint('Corpo da resposta: ${response.body}');
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = json.decode(response.body);
+
+        debugPrint('Dados decodificados: ${jsonData.toString()}');
+
         final List<Noticia> listaNoticias = jsonData
             .map((item) => Noticia.fromJson(item as Map<String, dynamic>))
             .toList();
@@ -127,6 +131,8 @@ class NoticiasScreenState extends State<NoticiasScreen> {
                     margin: Margins.zero,
                     padding: HtmlPaddings.zero,
                     fontSize: FontSize(14),
+                    maxLines: 2,
+                    textOverflow: TextOverflow.ellipsis,
                   ),
                 },
               ),
@@ -139,6 +145,10 @@ class NoticiasScreenState extends State<NoticiasScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Calcula o número de páginas com base na quantidade de notícias.
+    // Com 5 notícias e 3 por página, teremos 2 páginas.
+    final int pageCount = (noticias.length / 3).ceil();
+
     return Scaffold(
       appBar: CustomAppBar(
         onRefresh: fetchNoticias,
@@ -193,21 +203,21 @@ class NoticiasScreenState extends State<NoticiasScreen> {
                 Navigator.pop(context);
               },
             ),
-              ListTile(
+            ListTile(
               leading: const Icon(Icons.alarm),
               title: const Text('Lembretes'),
               onTap: () {
                 Navigator.pop(context);
               },
             ),
-              ListTile(
+            ListTile(
               leading: const Icon(Icons.mail),
               title: const Text('Contato'),
               onTap: () {
                 Navigator.pop(context);
               },
             ),
-              ListTile(
+            ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Configurações'),
               onTap: () {
@@ -221,10 +231,19 @@ class NoticiasScreenState extends State<NoticiasScreen> {
           ? const Center(child: CircularProgressIndicator())
           : noticias.isEmpty
               ? const Center(child: Text('Nenhuma notícia encontrada.'))
-              : ListView.builder(
-                  itemCount: noticias.length,
-                  itemBuilder: (context, index) {
-                    return _buildNoticiaCard(noticias[index]);
+              : PageView.builder(
+                  itemCount: pageCount,
+                  itemBuilder: (context, pageIndex) {
+                    final int start = pageIndex * 3;
+                    final int end = (start + 3 > noticias.length) ? noticias.length : start + 3;
+                    final List<Noticia> noticiasDaPagina = noticias.sublist(start, end);
+
+                    return ListView.builder(
+                      itemCount: noticiasDaPagina.length,
+                      itemBuilder: (context, index) {
+                        return _buildNoticiaCard(noticiasDaPagina[index]);
+                      },
+                    );
                   },
                 ),
     );
